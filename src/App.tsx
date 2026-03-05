@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Download, Cube } from '@phosphor-icons/react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Download, Cube, Code } from '@phosphor-icons/react'
 import { BrailleViewer3D } from '@/components/BrailleViewer3D'
 import { textToBraille, getBrailleCharacters, generateSTL } from '@/lib/braille'
 import { toast } from 'sonner'
@@ -12,6 +13,8 @@ import { motion } from 'framer-motion'
 
 function App() {
   const [inputText, setInputText] = useState('')
+  const [showSTLCode, setShowSTLCode] = useState(false)
+  const [stlContent, setStlContent] = useState('')
 
   const brailleText = useMemo(() => textToBraille(inputText), [inputText])
   
@@ -41,7 +44,7 @@ function App() {
     }
   }, [brailleCharacters])
 
-  const handleDownloadSTL = () => {
+  const handleViewSTLCode = () => {
     if (!inputText.trim()) {
       toast.error('Please enter some text first')
       return
@@ -59,17 +62,35 @@ function App() {
         baseHeight 
       })
       
-      const stlContent = generateSTL(brailleCharacters, baseWidth, baseHeight)
+      const generated = generateSTL(brailleCharacters, baseWidth, baseHeight)
       
-      if (!stlContent || stlContent.length < 100) {
+      if (!generated || generated.length < 100) {
         throw new Error('Generated STL content is invalid or empty')
       }
 
-      console.log('STL content length:', stlContent.length)
+      console.log('STL content length:', generated.length)
+      setStlContent(generated)
+      setShowSTLCode(true)
       
+      toast.success('STL code generated successfully', {
+        description: `${(generated.length / 1024).toFixed(1)} KB`
+      })
+    } catch (error) {
+      console.error('STL generation error:', error)
+      toast.error('Failed to generate STL file', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      })
+    }
+  }
+
+  const handleDownloadSTL = () => {
+    if (!stlContent) {
+      handleViewSTLCode()
+      return
+    }
+
+    try {
       const blob = new Blob([stlContent], { type: 'model/stl' })
-      console.log('Blob created, size:', blob.size)
-      
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -82,16 +103,19 @@ function App() {
       setTimeout(() => {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
-      }, 500)
+      }, 100)
       
-      toast.success(`Downloaded: ${fileName}`, {
-        description: `STL file ready (${(blob.size / 1024).toFixed(1)} KB)`
-      })
+      toast.success(`Downloaded: ${fileName}`)
     } catch (error) {
-      console.error('STL generation error:', error)
-      toast.error('Failed to generate STL file', {
-        description: error instanceof Error ? error.message : 'Unknown error'
-      })
+      console.error('Download error:', error)
+      toast.error('Failed to download file')
+    }
+  }
+
+  const handleCopySTL = () => {
+    if (stlContent) {
+      navigator.clipboard.writeText(stlContent)
+      toast.success('STL code copied to clipboard')
     }
   }
 
@@ -151,14 +175,25 @@ function App() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleDownloadSTL}
-                disabled={!inputText.trim()}
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium py-6 text-base transition-all hover:shadow-lg disabled:opacity-50"
-              >
-                <Download size={20} className="mr-2" />
-                Download STL File
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleViewSTLCode}
+                  disabled={!inputText.trim()}
+                  variant="outline"
+                  className="flex-1 font-medium py-6 text-base transition-all hover:shadow-lg disabled:opacity-50"
+                >
+                  <Code size={20} className="mr-2" />
+                  View STL Code
+                </Button>
+                <Button
+                  onClick={handleDownloadSTL}
+                  disabled={!inputText.trim()}
+                  className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground font-medium py-6 text-base transition-all hover:shadow-lg disabled:opacity-50"
+                >
+                  <Download size={20} className="mr-2" />
+                  Download STL
+                </Button>
+              </div>
             </Card>
           </motion.div>
 
@@ -224,6 +259,32 @@ function App() {
           </Card>
         </motion.div>
       </div>
+
+      <Dialog open={showSTLCode} onOpenChange={setShowSTLCode}>
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Generated STL Code</DialogTitle>
+            <DialogDescription>
+              Copy this code or download it as an .stl file for 3D printing
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto bg-secondary rounded-lg p-4">
+            <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+              {stlContent}
+            </pre>
+          </div>
+          <div className="flex gap-2 pt-4 border-t">
+            <Button onClick={handleCopySTL} variant="outline" className="flex-1">
+              <Code size={18} className="mr-2" />
+              Copy to Clipboard
+            </Button>
+            <Button onClick={handleDownloadSTL} className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Download size={18} className="mr-2" />
+              Download STL File
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
