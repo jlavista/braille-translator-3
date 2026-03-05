@@ -70,7 +70,7 @@ export function getBrailleCharacters(brailleText: string, maxWidth: number = 100
       currentX += charSpacing
       if (currentX > maxWidth) {
         currentX = 0
-        currentY += lineHeight
+        currentY -= lineHeight
       }
       continue
     }
@@ -96,7 +96,7 @@ export function getBrailleCharacters(brailleText: string, maxWidth: number = 100
     currentX += charSpacing
     if (currentX > maxWidth) {
       currentX = 0
-      currentY += lineHeight
+      currentY -= lineHeight
     }
   }
 

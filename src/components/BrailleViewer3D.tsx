@@ -172,13 +172,17 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
 
     const modelGroup = new THREE.Group()
 
+    const allDots = characters.flatMap(c => c.dots)
+    const minX = allDots.length > 0 ? Math.min(...allDots.map(d => d.x)) : 0
+    const minY = allDots.length > 0 ? Math.min(...allDots.map(d => d.y)) : 0
+
     const baseMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       shininess: 30,
     })
     const baseGeometry = new THREE.BoxGeometry(baseWidth, baseDepth, baseHeight)
     const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial)
-    baseMesh.position.set(baseWidth / 2, baseDepth / 2, -baseHeight / 2)
+    baseMesh.position.set(minX + baseWidth / 2, baseDepth / 2, minY - baseHeight / 2)
     modelGroup.add(baseMesh)
 
     const dotMaterial = new THREE.MeshPhongMaterial({
