@@ -150,6 +150,10 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     window.addEventListener('mouseup', onMouseUp)
     renderer.domElement.addEventListener('wheel', onWheel)
 
+    if (frameIdRef.current !== null) {
+      cancelAnimationFrame(frameIdRef.current)
+    }
+
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
 
@@ -182,13 +186,17 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     window.addEventListener('resize', handleResize)
 
     return () => {
+      if (frameIdRef.current !== null) {
+        cancelAnimationFrame(frameIdRef.current)
+        frameIdRef.current = null
+      }
       renderer.domElement.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
       renderer.domElement.removeEventListener('wheel', onWheel)
       window.removeEventListener('resize', handleResize)
     }
-  }, [])
+  }, [characters, baseWidth, baseHeight, baseDepth])
 
   useEffect(() => {
     return () => {
