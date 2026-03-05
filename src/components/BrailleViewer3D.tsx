@@ -153,13 +153,19 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
 
-      const radius = camera.position.length()
-      camera.position.x = baseWidth / 2 + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
-      camera.position.y = -baseHeight / 2 + radius * Math.sin(rotationRef.current.x)
-      camera.position.z = radius * Math.cos(rotationRef.current.y) * Math.cos(rotationRef.current.x)
-      camera.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
+      if (!cameraRef.current || !modelGroupRef.current) return
 
-      renderer.render(scene, camera)
+      const radius = cameraRef.current.position.length()
+      const centerX = modelGroupRef.current.position.x + baseWidth / 2
+      const centerY = modelGroupRef.current.position.y - baseHeight / 2
+      const centerZ = modelGroupRef.current.position.z + baseDepth / 2
+
+      cameraRef.current.position.x = centerX + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
+      cameraRef.current.position.y = centerY + radius * Math.sin(rotationRef.current.x)
+      cameraRef.current.position.z = centerZ + radius * Math.cos(rotationRef.current.y) * Math.cos(rotationRef.current.x)
+      cameraRef.current.lookAt(centerX, centerY, centerZ)
+
+      renderer.render(scene, cameraRef.current)
     }
 
     animate()
@@ -176,16 +182,13 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     window.addEventListener('resize', handleResize)
 
     return () => {
-      if (frameIdRef.current !== null) {
-        cancelAnimationFrame(frameIdRef.current)
-      }
       renderer.domElement.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
       renderer.domElement.removeEventListener('wheel', onWheel)
       window.removeEventListener('resize', handleResize)
     }
-  }, [baseWidth, baseHeight, baseDepth])
+  }, [])
 
   useEffect(() => {
     return () => {
