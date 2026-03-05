@@ -49,8 +49,8 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     scene.add(directionalLight2)
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-    camera.position.set(baseWidth / 2, baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
-    camera.lookAt(baseWidth / 2, baseHeight / 2, baseDepth / 2)
+    camera.position.set(30, 15, 75)
+    camera.lookAt(30, 15, 1.5)
     cameraRef.current = camera
 
     const onMouseDown = (event: MouseEvent) => {
@@ -111,14 +111,13 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
 
       if (modelGroupRef.current) {
         const radius = cameraRef.current.position.length()
-        const centerX = baseWidth / 2
-        const centerY = baseHeight / 2
-        const centerZ = baseDepth / 2
+        const bounds = new THREE.Box3().setFromObject(modelGroupRef.current)
+        const center = bounds.getCenter(new THREE.Vector3())
 
-        cameraRef.current.position.x = centerX + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
-        cameraRef.current.position.y = centerY + radius * Math.sin(rotationRef.current.x)
-        cameraRef.current.position.z = centerZ + radius * Math.cos(rotationRef.current.y) * Math.cos(rotationRef.current.x)
-        cameraRef.current.lookAt(centerX, centerY, centerZ)
+        cameraRef.current.position.x = center.x + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
+        cameraRef.current.position.y = center.y + radius * Math.sin(rotationRef.current.x)
+        cameraRef.current.position.z = center.z + radius * Math.cos(rotationRef.current.y) * Math.cos(rotationRef.current.x)
+        cameraRef.current.lookAt(center.x, center.y, center.z)
       }
 
       rendererRef.current.render(sceneRef.current, cameraRef.current)
@@ -203,11 +202,6 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     })
 
     sceneRef.current.add(modelGroup)
-
-    if (cameraRef.current) {
-      cameraRef.current.position.set(baseWidth / 2, baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
-      cameraRef.current.lookAt(baseWidth / 2, baseHeight / 2, baseDepth / 2)
-    }
   }, [characters, baseWidth, baseHeight, baseDepth])
 
   return <div ref={containerRef} className="w-full h-full rounded-lg" />
