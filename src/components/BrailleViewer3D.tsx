@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { BrailleCharacter, dotRadius, dotElevation } from '@/lib/braille'
 
@@ -19,6 +19,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
   const rotationRef = useRef({ x: -0.3, y: 0.5 })
   const mouseDownRef = useRef(false)
   const mousePositionRef = useRef({ x: 0, y: 0 })
+  const modelCenterRef = useRef(new THREE.Vector3())
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -106,10 +107,9 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
 
-      if (sceneRef.current && cameraRef.current && rendererRef.current && modelGroupRef.current) {
-        const radius = cameraRef.current.position.length()
-        const bounds = new THREE.Box3().setFromObject(modelGroupRef.current)
-        const center = bounds.getCenter(new THREE.Vector3())
+      if (sceneRef.current && cameraRef.current && rendererRef.current) {
+        const radius = 80
+        const center = modelCenterRef.current
 
         cameraRef.current.position.x = center.x + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
         cameraRef.current.position.y = center.y + radius * Math.sin(rotationRef.current.x)
@@ -167,6 +167,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
           }
         }
       })
+      modelGroupRef.current = null
     }
 
     const modelGroup = new THREE.Group()
@@ -194,8 +195,11 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
       })
     })
 
-    sceneRef.current.add(modelGroup)
     modelGroupRef.current = modelGroup
+    sceneRef.current.add(modelGroup)
+
+    const bounds = new THREE.Box3().setFromObject(modelGroup)
+    modelCenterRef.current = bounds.getCenter(new THREE.Vector3())
   }, [characters, baseWidth, baseHeight, baseDepth])
 
   return <div ref={containerRef} className="w-full h-full rounded-lg" />
