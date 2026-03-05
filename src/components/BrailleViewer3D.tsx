@@ -15,6 +15,8 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
   const sceneRef = useRef<THREE.Scene | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const frameIdRef = useRef<number | null>(null)
+  const modelGroupRef = useRef<THREE.Group | null>(null)
+  const rotationRef = useRef({ x: -0.3, y: 0.5 })
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -22,32 +24,54 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     const width = containerRef.current.clientWidth
     const height = containerRef.current.clientHeight
 
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xf5f4f0)
-    sceneRef.current = scene
+    if (!rendererRef.current) {
+      const renderer = new THREE.WebGLRenderer({ antialias: true })
+      renderer.setSize(width, height)
+      renderer.setPixelRatio(window.devicePixelRatio)
+      rendererRef.current = renderer
+      containerRef.current.appendChild(renderer.domElement)
+    }
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-    camera.position.set(baseWidth / 2, -baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
-    camera.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
-    cameraRef.current = camera
+    if (!sceneRef.current) {
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color(0xf5f4f0)
+      sceneRef.current = scene
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
-    renderer.setSize(width, height)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    rendererRef.current = renderer
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
+      scene.add(ambientLight)
 
-    containerRef.current.appendChild(renderer.domElement)
+      const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8)
+      directionalLight1.position.set(10, -10, 20)
+      scene.add(directionalLight1)
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
-    scene.add(ambientLight)
+      const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3)
+      directionalLight2.position.set(-10, 10, 10)
+      scene.add(directionalLight2)
+    }
 
-    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8)
-    directionalLight1.position.set(10, -10, 20)
-    scene.add(directionalLight1)
+    if (!cameraRef.current) {
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
+      camera.position.set(baseWidth / 2, -baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
+      camera.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
+      cameraRef.current = camera
+    }
 
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3)
-    directionalLight2.position.set(-10, 10, 10)
-    scene.add(directionalLight2)
+    if (modelGroupRef.current) {
+      sceneRef.current.remove(modelGroupRef.current)
+      modelGroupRef.current.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose()
+          if (Array.isArray(object.material)) {
+            object.material.forEach(material => material.dispose())
+          } else {
+            object.material.dispose()
+          }
+        }
+      })
+    }
+
+    const modelGroup = new THREE.Group()
+    modelGroupRef.current = modelGroup
 
     const baseMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
@@ -56,7 +80,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     const baseGeometry = new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth)
     const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial)
     baseMesh.position.set(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
-    scene.add(baseMesh)
+    modelGroup.add(baseMesh)
 
     const dotMaterial = new THREE.MeshPhongMaterial({
       color: 0xe8a05a,
@@ -68,15 +92,27 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
         const dotGeometry = new THREE.SphereGeometry(dotRadius, 16, 16)
         const dotMesh = new THREE.Mesh(dotGeometry, dotMaterial)
         dotMesh.position.set(dot.x, dot.y, baseDepth + dotElevation)
-        scene.add(dotMesh)
+        modelGroup.add(dotMesh)
       })
     })
+
+    sceneRef.current.add(modelGroup)
+
+    cameraRef.current.position.set(baseWidth / 2, -baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
+    cameraRef.current.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
+
+  }, [characters, baseWidth, baseHeight, baseDepth])
+
+  useEffect(() => {
+    if (!containerRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return
+
+    const renderer = rendererRef.current
+    const scene = sceneRef.current
+    const camera = cameraRef.current
 
     let mouseDown = false
     let mouseX = 0
     let mouseY = 0
-    let rotationX = -0.3
-    let rotationY = 0.5
 
     const onMouseDown = (event: MouseEvent) => {
       mouseDown = true
@@ -90,10 +126,10 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
       const deltaX = event.clientX - mouseX
       const deltaY = event.clientY - mouseY
 
-      rotationY += deltaX * 0.005
-      rotationX += deltaY * 0.005
+      rotationRef.current.y += deltaX * 0.005
+      rotationRef.current.x += deltaY * 0.005
 
-      rotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotationX))
+      rotationRef.current.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotationRef.current.x))
 
       mouseX = event.clientX
       mouseY = event.clientY
@@ -118,9 +154,9 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
       frameIdRef.current = requestAnimationFrame(animate)
 
       const radius = camera.position.length()
-      camera.position.x = baseWidth / 2 + radius * Math.sin(rotationY) * Math.cos(rotationX)
-      camera.position.y = -baseHeight / 2 + radius * Math.sin(rotationX)
-      camera.position.z = radius * Math.cos(rotationY) * Math.cos(rotationX)
+      camera.position.x = baseWidth / 2 + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
+      camera.position.y = -baseHeight / 2 + radius * Math.sin(rotationRef.current.x)
+      camera.position.z = radius * Math.cos(rotationRef.current.y) * Math.cos(rotationRef.current.x)
       camera.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
 
       renderer.render(scene, camera)
@@ -148,12 +184,37 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
       window.removeEventListener('mouseup', onMouseUp)
       renderer.domElement.removeEventListener('wheel', onWheel)
       window.removeEventListener('resize', handleResize)
-      if (containerRef.current && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement)
-      }
-      renderer.dispose()
     }
-  }, [characters, baseWidth, baseHeight, baseDepth])
+  }, [baseWidth, baseHeight, baseDepth])
+
+  useEffect(() => {
+    return () => {
+      if (frameIdRef.current !== null) {
+        cancelAnimationFrame(frameIdRef.current)
+      }
+      if (modelGroupRef.current) {
+        modelGroupRef.current.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            object.geometry.dispose()
+            if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose())
+            } else {
+              object.material.dispose()
+            }
+          }
+        })
+      }
+      if (rendererRef.current) {
+        if (containerRef.current && rendererRef.current.domElement.parentNode === containerRef.current) {
+          containerRef.current.removeChild(rendererRef.current.domElement)
+        }
+        rendererRef.current.dispose()
+        rendererRef.current = null
+      }
+      sceneRef.current = null
+      cameraRef.current = null
+    }
+  }, [])
 
   return <div ref={containerRef} className="w-full h-full rounded-lg" />
 }

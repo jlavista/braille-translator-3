@@ -42,18 +42,27 @@ function App() {
 
     try {
       const stlContent = generateSTL(brailleCharacters, baseWidth, baseHeight)
-      const blob = new Blob([stlContent], { type: 'text/plain' })
+      const blob = new Blob([stlContent], { type: 'application/vnd.ms-pki.stl' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'braille-model.stl'
+      const fileName = `braille-${inputText.slice(0, 20).replace(/[^a-z0-9]/gi, '-').toLowerCase()}.stl`
+      a.download = fileName
+      a.style.display = 'none'
       document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      toast.success('STL file downloaded successfully!')
+      setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 100)
+      toast.success(`Downloaded: ${fileName}`, {
+        description: 'Check your Downloads folder'
+      })
     } catch (error) {
-      toast.error('Failed to generate STL file')
+      console.error('STL generation error:', error)
+      toast.error('Failed to generate STL file', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      })
     }
   }
 
