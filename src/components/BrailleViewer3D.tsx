@@ -49,8 +49,8 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     scene.add(directionalLight2)
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-    camera.position.set(baseWidth / 2, -baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
-    camera.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
+    camera.position.set(baseWidth / 2, baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
+    camera.lookAt(baseWidth / 2, baseHeight / 2, baseDepth / 2)
     cameraRef.current = camera
 
     const onMouseDown = (event: MouseEvent) => {
@@ -112,7 +112,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
       if (modelGroupRef.current) {
         const radius = cameraRef.current.position.length()
         const centerX = baseWidth / 2
-        const centerY = -baseHeight / 2
+        const centerY = baseHeight / 2
         const centerZ = baseDepth / 2
 
         cameraRef.current.position.x = centerX + radius * Math.sin(rotationRef.current.y) * Math.cos(rotationRef.current.x)
@@ -185,7 +185,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     })
     const baseGeometry = new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth)
     const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial)
-    baseMesh.position.set(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
+    baseMesh.position.set(baseWidth / 2, baseHeight / 2, baseDepth / 2)
     modelGroup.add(baseMesh)
 
     const dotMaterial = new THREE.MeshPhongMaterial({
@@ -197,7 +197,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
       character.dots.forEach(dot => {
         const dotGeometry = new THREE.SphereGeometry(dotRadius, 16, 16)
         const dotMesh = new THREE.Mesh(dotGeometry, dotMaterial)
-        dotMesh.position.set(dot.x, dot.y, baseDepth + dotElevation)
+        dotMesh.position.set(dot.x, -dot.y, baseDepth + dotElevation)
         modelGroup.add(dotMesh)
       })
     })
@@ -205,8 +205,8 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
     sceneRef.current.add(modelGroup)
 
     if (cameraRef.current) {
-      cameraRef.current.position.set(baseWidth / 2, -baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
-      cameraRef.current.lookAt(baseWidth / 2, -baseHeight / 2, baseDepth / 2)
+      cameraRef.current.position.set(baseWidth / 2, baseHeight / 2, Math.max(baseWidth, baseHeight) * 1.5)
+      cameraRef.current.lookAt(baseWidth / 2, baseHeight / 2, baseDepth / 2)
     }
   }, [characters, baseWidth, baseHeight, baseDepth])
 
