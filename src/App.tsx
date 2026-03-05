@@ -47,23 +47,45 @@ function App() {
       return
     }
 
+    if (brailleCharacters.length === 0) {
+      toast.error('No Braille characters to export')
+      return
+    }
+
     try {
+      console.log('Generating STL with:', { 
+        numCharacters: brailleCharacters.length, 
+        baseWidth, 
+        baseHeight 
+      })
+      
       const stlContent = generateSTL(brailleCharacters, baseWidth, baseHeight)
-      const blob = new Blob([stlContent], { type: 'application/vnd.ms-pki.stl' })
+      
+      if (!stlContent || stlContent.length < 100) {
+        throw new Error('Generated STL content is invalid or empty')
+      }
+
+      console.log('STL content length:', stlContent.length)
+      
+      const blob = new Blob([stlContent], { type: 'model/stl' })
+      console.log('Blob created, size:', blob.size)
+      
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       const fileName = `braille-${inputText.slice(0, 20).replace(/[^a-z0-9]/gi, '-').toLowerCase()}.stl`
       a.download = fileName
-      a.style.display = 'none'
+      
       document.body.appendChild(a)
       a.click()
+      
       setTimeout(() => {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
-      }, 100)
+      }, 500)
+      
       toast.success(`Downloaded: ${fileName}`, {
-        description: 'Check your Downloads folder'
+        description: `STL file ready (${(blob.size / 1024).toFixed(1)} KB)`
       })
     } catch (error) {
       console.error('STL generation error:', error)
