@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import * as React from 'react'
 import * as THREE from 'three'
 import { BrailleCharacter, dotRadius, dotElevation } from '@/lib/braille'
 
@@ -12,18 +12,18 @@ interface BrailleViewer3DProps {
 }
 
 export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY, baseDepth = 3 }: BrailleViewer3DProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const sceneRef = useRef<THREE.Scene | null>(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
-  const frameIdRef = useRef<number | null>(null)
-  const modelGroupRef = useRef<THREE.Group | null>(null)
-  const rotationRef = useRef({ x: -0.3, y: 0.5 })
-  const mouseDownRef = useRef(false)
-  const mousePositionRef = useRef({ x: 0, y: 0 })
-  const modelCenterRef = useRef(new THREE.Vector3())
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const rendererRef = React.useRef<THREE.WebGLRenderer | null>(null)
+  const sceneRef = React.useRef<THREE.Scene | null>(null)
+  const cameraRef = React.useRef<THREE.PerspectiveCamera | null>(null)
+  const frameIdRef = React.useRef<number | null>(null)
+  const modelGroupRef = React.useRef<THREE.Group | null>(null)
+  const rotationRef = React.useRef({ x: -0.3, y: 0.5 })
+  const mouseDownRef = React.useRef(false)
+  const mousePositionRef = React.useRef({ x: 0, y: 0 })
+  const modelCenterRef = React.useRef(new THREE.Vector3())
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!containerRef.current) return
 
     const container = containerRef.current
@@ -154,7 +154,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY,
     }
   }, [])
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!sceneRef.current) return
 
     if (modelGroupRef.current) {
