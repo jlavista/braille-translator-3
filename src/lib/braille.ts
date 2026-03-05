@@ -1,0 +1,179 @@
+const brailleMap: Record<string, string> = {
+  'a': '⠁', 'b': '⠃', 'c': '⠉', 'd': '⠙', 'e': '⠑',
+  'f': '⠋', 'g': '⠛', 'h': '⠓', 'i': '⠊', 'j': '⠚',
+  'k': '⠅', 'l': '⠇', 'm': '⠍', 'n': '⠝', 'o': '⠕',
+  'p': '⠏', 'q': '⠟', 'r': '⠗', 's': '⠎', 't': '⠞',
+  'u': '⠥', 'v': '⠧', 'w': '⠺', 'x': '⠭', 'y': '⠽', 'z': '⠵',
+  '1': '⠁', '2': '⠃', '3': '⠉', '4': '⠙', '5': '⠑',
+  '6': '⠋', '7': '⠛', '8': '⠓', '9': '⠊', '0': '⠚',
+  ' ': ' ', ',': '⠂', ';': '⠆', ':': '⠒', '.': '⠲',
+  '!': '⠖', '?': '⠦', "'": '⠄', '-': '⠤', '(': '⠐⠣', ')': '⠐⠜'
+}
+
+export function textToBraille(text: string): string {
+  return text
+    .toLowerCase()
+    .split('')
+    .map(char => brailleMap[char] || ' ')
+    .join('')
+}
+
+export interface BrailleDot {
+  x: number
+  y: number
+  z: number
+}
+
+export interface BrailleCharacter {
+  char: string
+  dots: BrailleDot[]
+  offsetX: number
+}
+
+const dotWidth = 2.5
+const dotHeight = 2.5
+const dotSpacing = 2.5
+const charSpacing = 6.0
+const lineHeight = 10.0
+const dotRadius = 0.6
+const dotElevation = 0.5
+
+const brailleDotPatterns: Record<string, number[]> = {
+  '⠁': [1], '⠃': [1, 2], '⠉': [1, 4], '⠙': [1, 4, 5], '⠑': [1, 5],
+  '⠋': [1, 2, 4], '⠛': [1, 2, 4, 5], '⠓': [1, 2, 5], '⠊': [2, 4], '⠚': [2, 4, 5],
+  '⠅': [1, 3], '⠇': [1, 2, 3], '⠍': [1, 3, 4], '⠝': [1, 3, 4, 5], '⠕': [1, 3, 5],
+  '⠏': [1, 2, 3, 4], '⠟': [1, 2, 3, 4, 5], '⠗': [1, 2, 3, 5], '⠎': [2, 3, 4], '⠞': [2, 3, 4, 5],
+  '⠥': [1, 3, 6], '⠧': [1, 2, 3, 6], '⠺': [2, 4, 5, 6], '⠭': [1, 3, 4, 6], '⠽': [1, 3, 4, 5, 6], '⠵': [1, 3, 5, 6],
+  '⠂': [2], '⠆': [2, 3], '⠒': [2, 5], '⠲': [2, 5, 6], '⠖': [2, 3, 5], '⠦': [2, 3, 6],
+  '⠄': [3], '⠤': [3, 6], '⠐⠣': [5, 2, 3, 6], '⠐⠜': [5, 3, 5, 6]
+}
+
+function getDotPosition(dotNumber: number): { x: number; y: number } {
+  const positions: Record<number, { x: number; y: number }> = {
+    1: { x: 0, y: 0 },
+    2: { x: 0, y: dotSpacing },
+    3: { x: 0, y: dotSpacing * 2 },
+    4: { x: dotWidth, y: 0 },
+    5: { x: dotWidth, y: dotSpacing },
+    6: { x: dotWidth, y: dotSpacing * 2 }
+  }
+  return positions[dotNumber] || { x: 0, y: 0 }
+}
+
+export function getBrailleCharacters(brailleText: string, maxWidth: number = 100): BrailleCharacter[] {
+  const characters: BrailleCharacter[] = []
+  let currentX = 0
+  let currentY = 0
+
+  for (const char of brailleText) {
+    if (char === ' ') {
+      currentX += charSpacing
+      if (currentX > maxWidth) {
+        currentX = 0
+        currentY += lineHeight
+      }
+      continue
+    }
+
+    const pattern = brailleDotPatterns[char]
+    if (!pattern) continue
+
+    const dots: BrailleDot[] = pattern.map(dotNum => {
+      const pos = getDotPosition(dotNum)
+      return {
+        x: currentX + pos.x,
+        y: currentY - pos.y,
+        z: dotElevation
+      }
+    })
+
+    characters.push({
+      char,
+      dots,
+      offsetX: currentX
+    })
+
+    currentX += charSpacing
+    if (currentX > maxWidth) {
+      currentX = 0
+      currentY += lineHeight
+    }
+  }
+
+  return characters
+}
+
+export function generateSTL(characters: BrailleCharacter[], baseWidth: number, baseHeight: number, baseDepth: number = 3): string {
+  const triangles: string[] = []
+
+  const addTriangle = (v1: number[], v2: number[], v3: number[]) => {
+    const normal = calculateNormal(v1, v2, v3)
+    triangles.push(`  facet normal ${normal[0].toExponential()} ${normal[1].toExponential()} ${normal[2].toExponential()}`)
+    triangles.push(`    outer loop`)
+    triangles.push(`      vertex ${v1[0].toExponential()} ${v1[1].toExponential()} ${v1[2].toExponential()}`)
+    triangles.push(`      vertex ${v2[0].toExponential()} ${v2[1].toExponential()} ${v2[2].toExponential()}`)
+    triangles.push(`      vertex ${v3[0].toExponential()} ${v3[1].toExponential()} ${v3[2].toExponential()}`)
+    triangles.push(`    endloop`)
+    triangles.push(`  endfacet`)
+  }
+
+  const calculateNormal = (v1: number[], v2: number[], v3: number[]): number[] => {
+    const u = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
+    const v = [v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]]
+    const normal = [
+      u[1] * v[2] - u[2] * v[1],
+      u[2] * v[0] - u[0] * v[2],
+      u[0] * v[1] - u[1] * v[0]
+    ]
+    const length = Math.sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2)
+    return length > 0 ? [normal[0] / length, normal[1] / length, normal[2] / length] : [0, 0, 1]
+  }
+
+  addTriangle([0, 0, 0], [baseWidth, 0, 0], [baseWidth, baseHeight, 0])
+  addTriangle([0, 0, 0], [baseWidth, baseHeight, 0], [0, baseHeight, 0])
+
+  addTriangle([0, 0, 0], [0, baseHeight, 0], [0, baseHeight, baseDepth])
+  addTriangle([0, 0, 0], [0, baseHeight, baseDepth], [0, 0, baseDepth])
+
+  addTriangle([baseWidth, 0, 0], [baseWidth, baseHeight, baseDepth], [baseWidth, baseHeight, 0])
+  addTriangle([baseWidth, 0, 0], [baseWidth, 0, baseDepth], [baseWidth, baseHeight, baseDepth])
+
+  addTriangle([0, 0, 0], [baseWidth, 0, baseDepth], [baseWidth, 0, 0])
+  addTriangle([0, 0, 0], [0, 0, baseDepth], [baseWidth, 0, baseDepth])
+
+  addTriangle([0, baseHeight, 0], [baseWidth, baseHeight, 0], [baseWidth, baseHeight, baseDepth])
+  addTriangle([0, baseHeight, 0], [baseWidth, baseHeight, baseDepth], [0, baseHeight, baseDepth])
+
+  addTriangle([0, 0, baseDepth], [0, baseHeight, baseDepth], [baseWidth, baseHeight, baseDepth])
+  addTriangle([0, 0, baseDepth], [baseWidth, baseHeight, baseDepth], [baseWidth, 0, baseDepth])
+
+  characters.forEach(character => {
+    character.dots.forEach(dot => {
+      const segments = 12
+      const cx = dot.x
+      const cy = -dot.y
+      const cz = baseDepth + dotElevation
+
+      for (let i = 0; i < segments; i++) {
+        const angle1 = (i / segments) * Math.PI * 2
+        const angle2 = ((i + 1) / segments) * Math.PI * 2
+
+        const x1 = cx + Math.cos(angle1) * dotRadius
+        const y1 = cy + Math.sin(angle1) * dotRadius
+        const x2 = cx + Math.cos(angle2) * dotRadius
+        const y2 = cy + Math.sin(angle2) * dotRadius
+
+        addTriangle([cx, cy, cz], [x1, y1, baseDepth], [x2, y2, baseDepth])
+
+        addTriangle([x1, y1, baseDepth], [x2, y2, baseDepth], [x2, y2, 0])
+        addTriangle([x1, y1, baseDepth], [x2, y2, 0], [x1, y1, 0])
+      }
+
+      addTriangle([cx, cy, cz], [cx + dotRadius, cy, baseDepth], [cx, cy + dotRadius, baseDepth])
+    })
+  })
+
+  return `solid braille\n${triangles.join('\n')}\nendsolid braille`
+}
+
+export { dotRadius, dotElevation }
