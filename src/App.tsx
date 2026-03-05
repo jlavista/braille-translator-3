@@ -25,12 +25,13 @@ function App() {
       return { baseWidth: 60, baseHeight: 30 }
     }
 
-    const maxX = Math.max(...brailleCharacters.flatMap(c => c.dots.map(d => d.x)), 0)
-    const minY = Math.min(...brailleCharacters.flatMap(c => c.dots.map(d => d.y)), 0)
+    const allDots = brailleCharacters.flatMap(c => c.dots)
+    const maxX = Math.max(...allDots.map(d => d.x), 0)
+    const maxY = Math.max(...allDots.map(d => Math.abs(d.y)), 0)
 
     return {
       baseWidth: Math.max(maxX + 10, 60),
-      baseHeight: Math.max(Math.abs(minY) + 10, 30)
+      baseHeight: Math.max(maxY + 10, 30)
     }
   }, [brailleCharacters])
 
