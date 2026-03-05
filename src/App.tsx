@@ -20,20 +20,24 @@ function App() {
     return getBrailleCharacters(brailleText, 80)
   }, [brailleText])
 
-  const { baseWidth, baseHeight } = useMemo(() => {
+  const { baseWidth, baseHeight, minX, minY } = useMemo(() => {
     if (brailleCharacters.length === 0) {
-      return { baseWidth: 60, baseHeight: 30 }
+      return { baseWidth: 60, baseHeight: 30, minX: 0, minY: 0 }
     }
 
     const allDots = brailleCharacters.flatMap(c => c.dots)
-    const minX = Math.min(...allDots.map(d => d.x), 0)
-    const maxX = Math.max(...allDots.map(d => d.x), 0)
-    const minY = Math.min(...allDots.map(d => d.y), 0)
-    const maxY = Math.max(...allDots.map(d => d.y), 0)
+    const minX = Math.min(...allDots.map(d => d.x))
+    const maxX = Math.max(...allDots.map(d => d.x))
+    const minY = Math.min(...allDots.map(d => d.y))
+    const maxY = Math.max(...allDots.map(d => d.y))
+
+    const padding = 5
 
     return {
-      baseWidth: Math.max(maxX - minX + 10, 60),
-      baseHeight: Math.max(maxY - minY + 10, 30)
+      baseWidth: Math.max(maxX - minX + padding * 2, 60),
+      baseHeight: Math.max(maxY - minY + padding * 2, 30),
+      minX: minX - padding,
+      minY: minY - padding
     }
   }, [brailleCharacters])
 
@@ -151,6 +155,8 @@ function App() {
                     characters={brailleCharacters}
                     baseWidth={baseWidth}
                     baseHeight={baseHeight}
+                    minX={minX}
+                    minY={minY}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">

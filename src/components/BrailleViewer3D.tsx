@@ -6,10 +6,12 @@ interface BrailleViewer3DProps {
   characters: BrailleCharacter[]
   baseWidth: number
   baseHeight: number
+  minX: number
+  minY: number
   baseDepth?: number
 }
 
-export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth = 3 }: BrailleViewer3DProps) {
+export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY, baseDepth = 3 }: BrailleViewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
@@ -172,17 +174,13 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
 
     const modelGroup = new THREE.Group()
 
-    const allDots = characters.flatMap(c => c.dots)
-    const minX = allDots.length > 0 ? Math.min(...allDots.map(d => d.x)) : 0
-    const minY = allDots.length > 0 ? Math.min(...allDots.map(d => d.y)) : 0
-
     const baseMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       shininess: 30,
     })
     const baseGeometry = new THREE.BoxGeometry(baseWidth, baseDepth, baseHeight)
     const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial)
-    baseMesh.position.set(minX + baseWidth / 2, baseDepth / 2, minY - baseHeight / 2)
+    baseMesh.position.set(minX + baseWidth / 2, baseDepth / 2, minY + baseHeight / 2)
     modelGroup.add(baseMesh)
 
     const dotMaterial = new THREE.MeshPhongMaterial({
@@ -204,7 +202,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, baseDepth =
 
     const bounds = new THREE.Box3().setFromObject(modelGroup)
     modelCenterRef.current = bounds.getCenter(new THREE.Vector3())
-  }, [characters, baseWidth, baseHeight, baseDepth])
+  }, [characters, baseWidth, baseHeight, minX, minY, baseDepth])
 
   return <div ref={containerRef} className="w-full h-full rounded-lg" />
 }
