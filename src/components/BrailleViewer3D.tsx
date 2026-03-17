@@ -18,7 +18,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY,
   const cameraRef = React.useRef<THREE.PerspectiveCamera | null>(null)
   const frameIdRef = React.useRef<number | null>(null)
   const modelGroupRef = React.useRef<THREE.Group | null>(null)
-  const rotationRef = React.useRef({ x: -0.3, y: 0.5 })
+  const rotationRef = React.useRef({ x: -0.3, y: 0.5 + Math.PI })
   const mouseDownRef = React.useRef(false)
   const mousePositionRef = React.useRef({ x: 0, y: 0 })
   const modelCenterRef = React.useRef(new THREE.Vector3())
