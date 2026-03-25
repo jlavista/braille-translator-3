@@ -59,10 +59,12 @@ function App() {
       console.log('Generating STL with:', { 
         numCharacters: brailleCharacters.length, 
         baseWidth, 
-        baseHeight 
+        baseHeight,
+        minX,
+        minY
       })
       
-      const generated = generateSTL(brailleCharacters, baseWidth, baseHeight)
+      const generated = generateSTL(brailleCharacters, baseWidth, baseHeight, 3, minX, minY)
       
       if (!generated || generated.length < 100) {
         throw new Error('Generated STL content is invalid or empty')

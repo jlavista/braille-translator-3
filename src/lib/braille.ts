@@ -103,7 +103,7 @@ export function getBrailleCharacters(brailleText: string, maxWidth: number = 100
   return characters
 }
 
-export function generateSTL(characters: BrailleCharacter[], baseWidth: number, baseHeight: number, baseDepth: number = 3): string {
+export function generateSTL(characters: BrailleCharacter[], baseWidth: number, baseHeight: number, baseDepth: number = 3, minX: number = 0, minY: number = 0): string {
   const triangles: string[] = []
 
   const addTriangle = (v1: number[], v2: number[], v3: number[]) => {
@@ -129,23 +129,28 @@ export function generateSTL(characters: BrailleCharacter[], baseWidth: number, b
     return length > 0 ? [normal[0] / length, normal[1] / length, normal[2] / length] : [0, 0, 1]
   }
 
-  addTriangle([0, 0, 0], [baseWidth, 0, 0], [baseWidth, baseHeight, 0])
-  addTriangle([0, 0, 0], [baseWidth, baseHeight, 0], [0, baseHeight, 0])
+  const baseX = minX
+  const baseY = minY
+  const baseX2 = minX + baseWidth
+  const baseY2 = minY + baseHeight
 
-  addTriangle([0, 0, 0], [0, baseHeight, 0], [0, baseHeight, baseDepth])
-  addTriangle([0, 0, 0], [0, baseHeight, baseDepth], [0, 0, baseDepth])
+  addTriangle([baseX, baseY, 0], [baseX2, baseY, 0], [baseX2, baseY2, 0])
+  addTriangle([baseX, baseY, 0], [baseX2, baseY2, 0], [baseX, baseY2, 0])
 
-  addTriangle([baseWidth, 0, 0], [baseWidth, baseHeight, baseDepth], [baseWidth, baseHeight, 0])
-  addTriangle([baseWidth, 0, 0], [baseWidth, 0, baseDepth], [baseWidth, baseHeight, baseDepth])
+  addTriangle([baseX, baseY, 0], [baseX, baseY2, 0], [baseX, baseY2, baseDepth])
+  addTriangle([baseX, baseY, 0], [baseX, baseY2, baseDepth], [baseX, baseY, baseDepth])
 
-  addTriangle([0, 0, 0], [baseWidth, 0, baseDepth], [baseWidth, 0, 0])
-  addTriangle([0, 0, 0], [0, 0, baseDepth], [baseWidth, 0, baseDepth])
+  addTriangle([baseX2, baseY, 0], [baseX2, baseY2, baseDepth], [baseX2, baseY2, 0])
+  addTriangle([baseX2, baseY, 0], [baseX2, baseY, baseDepth], [baseX2, baseY2, baseDepth])
 
-  addTriangle([0, baseHeight, 0], [baseWidth, baseHeight, 0], [baseWidth, baseHeight, baseDepth])
-  addTriangle([0, baseHeight, 0], [baseWidth, baseHeight, baseDepth], [0, baseHeight, baseDepth])
+  addTriangle([baseX, baseY, 0], [baseX2, baseY, baseDepth], [baseX2, baseY, 0])
+  addTriangle([baseX, baseY, 0], [baseX, baseY, baseDepth], [baseX2, baseY, baseDepth])
 
-  addTriangle([0, 0, baseDepth], [0, baseHeight, baseDepth], [baseWidth, baseHeight, baseDepth])
-  addTriangle([0, 0, baseDepth], [baseWidth, baseHeight, baseDepth], [baseWidth, 0, baseDepth])
+  addTriangle([baseX, baseY2, 0], [baseX2, baseY2, 0], [baseX2, baseY2, baseDepth])
+  addTriangle([baseX, baseY2, 0], [baseX2, baseY2, baseDepth], [baseX, baseY2, baseDepth])
+
+  addTriangle([baseX, baseY, baseDepth], [baseX, baseY2, baseDepth], [baseX2, baseY2, baseDepth])
+  addTriangle([baseX, baseY, baseDepth], [baseX2, baseY2, baseDepth], [baseX2, baseY, baseDepth])
 
   characters.forEach(character => {
     character.dots.forEach(dot => {
