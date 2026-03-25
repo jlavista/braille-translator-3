@@ -34,7 +34,7 @@ function App() {
     const minY = Math.min(...allDots.map(d => d.y))
     const maxY = Math.max(...allDots.map(d => d.y))
 
-    const padding = 5
+    const padding = 15
 
     return {
       baseWidth: Math.max(maxX - minX + padding * 2, 60),
