@@ -4,17 +4,20 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Slider } from '@/components/ui/slider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Download, Cube, Code } from '@phosphor-icons/react'
 import { BrailleViewer3D } from '@/components/BrailleViewer3D'
 import { textToBraille, getBrailleCharacters, generateSTL } from '@/lib/braille'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { useKV } from '@github/spark/hooks'
 
 function App() {
   const [inputText, setInputText] = useState('')
   const [showSTLCode, setShowSTLCode] = useState(false)
   const [stlContent, setStlContent] = useState('')
+  const [padding, setPadding] = useKV<number>('braille-padding', 30)
 
   const brailleText = useMemo(() => textToBraille(inputText), [inputText])
   
@@ -34,15 +37,15 @@ function App() {
     const minY = Math.min(...allDots.map(d => d.y))
     const maxY = Math.max(...allDots.map(d => d.y))
 
-    const padding = 30
+    const paddingValue = padding ?? 30
 
     return {
-      baseWidth: Math.max(maxX - minX + padding * 2, 60),
-      baseHeight: Math.max(maxY - minY + padding * 2, 30),
-      minX: minX - padding,
-      minY: minY - padding
+      baseWidth: Math.max(maxX - minX + paddingValue * 2, 60),
+      baseHeight: Math.max(maxY - minY + paddingValue * 2, 30),
+      minX: minX - paddingValue,
+      minY: minY - paddingValue
     }
-  }, [brailleCharacters])
+  }, [brailleCharacters, padding])
 
   const handleViewSTLCode = () => {
     if (!inputText.trim()) {
@@ -175,6 +178,31 @@ function App() {
                     </span>
                   )}
                 </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <Label htmlFor="padding-slider" className="text-base font-semibold">
+                  Padding/Margin Size
+                </Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="padding-slider"
+                    value={[padding ?? 30]}
+                    onValueChange={(value) => setPadding(value[0])}
+                    min={10}
+                    max={100}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <span className="text-sm font-mono text-muted-foreground min-w-[4rem] text-right">
+                    {padding ?? 30} mm
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adjust the surface area around the Braille text
+                </p>
               </div>
 
               <div className="flex gap-2">
