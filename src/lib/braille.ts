@@ -30,13 +30,18 @@ export interface BrailleCharacter {
   offsetX: number
 }
 
+export interface BrailleSettings {
+  dotRadius?: number
+  dotHeight?: number
+}
+
 const dotWidth = 2.5
 const dotHeight = 2.5
 const dotSpacing = 2.5
 const charSpacing = 6.0
 const lineHeight = 10.0
-const dotRadius = 0.6
-const dotElevation = 0.5
+export const DEFAULT_DOT_RADIUS = 0.6
+export const DEFAULT_DOT_HEIGHT = 0.5
 
 const brailleDotPatterns: Record<string, number[]> = {
   '⠁': [1], '⠃': [1, 2], '⠉': [1, 4], '⠙': [1, 4, 5], '⠑': [1, 5],
@@ -60,7 +65,7 @@ function getDotPosition(dotNumber: number): { x: number; y: number } {
   return positions[dotNumber] || { x: 0, y: 0 }
 }
 
-export function getBrailleCharacters(brailleText: string, maxWidth: number = 100): BrailleCharacter[] {
+export function getBrailleCharacters(brailleText: string, maxWidth: number = 100, dotHeight: number = DEFAULT_DOT_HEIGHT): BrailleCharacter[] {
   const characters: BrailleCharacter[] = []
   let currentX = 0
   let currentY = 0
@@ -83,7 +88,7 @@ export function getBrailleCharacters(brailleText: string, maxWidth: number = 100
       return {
         x: currentX + pos.x,
         y: currentY - pos.y,
-        z: dotElevation
+        z: dotHeight
       }
     })
 
@@ -103,7 +108,16 @@ export function getBrailleCharacters(brailleText: string, maxWidth: number = 100
   return characters
 }
 
-export function generateSTL(characters: BrailleCharacter[], baseWidth: number, baseHeight: number, baseDepth: number = 3, minX: number = 0, minY: number = 0): string {
+export function generateSTL(
+  characters: BrailleCharacter[], 
+  baseWidth: number, 
+  baseHeight: number, 
+  baseDepth: number = 3, 
+  minX: number = 0, 
+  minY: number = 0,
+  dotRadius: number = DEFAULT_DOT_RADIUS,
+  dotHeight: number = DEFAULT_DOT_HEIGHT
+): string {
   const triangles: string[] = []
 
   const addTriangle = (v1: number[], v2: number[], v3: number[]) => {
@@ -157,7 +171,7 @@ export function generateSTL(characters: BrailleCharacter[], baseWidth: number, b
       const segments = 12
       const cx = dot.x
       const cy = -dot.y
-      const cz = baseDepth + dotElevation
+      const cz = baseDepth + dotHeight
 
       for (let i = 0; i < segments; i++) {
         const angle1 = (i / segments) * Math.PI * 2
@@ -180,5 +194,3 @@ export function generateSTL(characters: BrailleCharacter[], baseWidth: number, b
 
   return `solid braille\n${triangles.join('\n')}\nendsolid braille`
 }
-
-export { dotRadius, dotElevation }

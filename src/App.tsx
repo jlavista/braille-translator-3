@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/slider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Download, Cube, Code } from '@phosphor-icons/react'
 import { BrailleViewer3D } from '@/components/BrailleViewer3D'
-import { textToBraille, getBrailleCharacters, generateSTL } from '@/lib/braille'
+import { textToBraille, getBrailleCharacters, generateSTL, DEFAULT_DOT_RADIUS, DEFAULT_DOT_HEIGHT } from '@/lib/braille'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
@@ -18,13 +18,15 @@ function App() {
   const [showSTLCode, setShowSTLCode] = useState(false)
   const [stlContent, setStlContent] = useState('')
   const [padding, setPadding] = useKV<number>('braille-padding', 30)
+  const [dotRadius, setDotRadius] = useKV<number>('braille-dot-radius', DEFAULT_DOT_RADIUS)
+  const [dotHeight, setDotHeight] = useKV<number>('braille-dot-height', DEFAULT_DOT_HEIGHT)
 
   const brailleText = useMemo(() => textToBraille(inputText), [inputText])
   
   const brailleCharacters = useMemo(() => {
     if (!brailleText) return []
-    return getBrailleCharacters(brailleText, 80)
-  }, [brailleText])
+    return getBrailleCharacters(brailleText, 80, dotHeight ?? DEFAULT_DOT_HEIGHT)
+  }, [brailleText, dotHeight])
 
   const { baseWidth, baseHeight, minX, minY } = useMemo(() => {
     if (brailleCharacters.length === 0) {
@@ -64,10 +66,21 @@ function App() {
         baseWidth, 
         baseHeight,
         minX,
-        minY
+        minY,
+        dotRadius: dotRadius ?? DEFAULT_DOT_RADIUS,
+        dotHeight: dotHeight ?? DEFAULT_DOT_HEIGHT
       })
       
-      const generated = generateSTL(brailleCharacters, baseWidth, baseHeight, 3, minX, minY)
+      const generated = generateSTL(
+        brailleCharacters, 
+        baseWidth, 
+        baseHeight, 
+        3, 
+        minX, 
+        minY,
+        dotRadius ?? DEFAULT_DOT_RADIUS,
+        dotHeight ?? DEFAULT_DOT_HEIGHT
+      )
       
       if (!generated || generated.length < 100) {
         throw new Error('Generated STL content is invalid or empty')
@@ -205,6 +218,54 @@ function App() {
                 </p>
               </div>
 
+              <Separator />
+
+              <div className="space-y-3">
+                <Label htmlFor="dot-radius-slider" className="text-base font-semibold">
+                  Dot Size (Radius)
+                </Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="dot-radius-slider"
+                    value={[dotRadius ?? DEFAULT_DOT_RADIUS]}
+                    onValueChange={(value) => setDotRadius(value[0])}
+                    min={0.3}
+                    max={1.5}
+                    step={0.05}
+                    className="flex-1"
+                  />
+                  <span className="text-sm font-mono text-muted-foreground min-w-[4rem] text-right">
+                    {(dotRadius ?? DEFAULT_DOT_RADIUS).toFixed(2)} mm
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adjust the diameter of each Braille dot for tactile preference
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="dot-height-slider" className="text-base font-semibold">
+                  Dot Height
+                </Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="dot-height-slider"
+                    value={[dotHeight ?? DEFAULT_DOT_HEIGHT]}
+                    onValueChange={(value) => setDotHeight(value[0])}
+                    min={0.2}
+                    max={1.5}
+                    step={0.05}
+                    className="flex-1"
+                  />
+                  <span className="text-sm font-mono text-muted-foreground min-w-[4rem] text-right">
+                    {(dotHeight ?? DEFAULT_DOT_HEIGHT).toFixed(2)} mm
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adjust how much the dots protrude from the surface
+                </p>
+              </div>
+
               <div className="flex gap-2">
                 <Button
                   onClick={handleViewSTLCode}
@@ -244,6 +305,8 @@ function App() {
                     baseHeight={baseHeight}
                     minX={minX}
                     minY={minY}
+                    dotRadius={dotRadius ?? DEFAULT_DOT_RADIUS}
+                    dotHeight={dotHeight ?? DEFAULT_DOT_HEIGHT}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">

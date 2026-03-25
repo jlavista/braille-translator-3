@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { BrailleCharacter, dotRadius, dotElevation } from '@/lib/braille'
+import { BrailleCharacter, DEFAULT_DOT_RADIUS, DEFAULT_DOT_HEIGHT } from '@/lib/braille'
 
 interface BrailleViewer3DProps {
   characters: BrailleCharacter[]
@@ -9,9 +9,20 @@ interface BrailleViewer3DProps {
   minX: number
   minY: number
   baseDepth?: number
+  dotRadius?: number
+  dotHeight?: number
 }
 
-export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY, baseDepth = 3 }: BrailleViewer3DProps) {
+export function BrailleViewer3D({ 
+  characters, 
+  baseWidth, 
+  baseHeight, 
+  minX, 
+  minY, 
+  baseDepth = 3,
+  dotRadius = DEFAULT_DOT_RADIUS,
+  dotHeight = DEFAULT_DOT_HEIGHT
+}: BrailleViewer3DProps) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const rendererRef = React.useRef<THREE.WebGLRenderer | null>(null)
   const sceneRef = React.useRef<THREE.Scene | null>(null)
@@ -192,7 +203,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY,
       character.dots.forEach(dot => {
         const dotGeometry = new THREE.SphereGeometry(dotRadius, 16, 16)
         const dotMesh = new THREE.Mesh(dotGeometry, dotMaterial)
-        dotMesh.position.set(dot.x, baseDepth + dotElevation, dot.y)
+        dotMesh.position.set(dot.x, baseDepth + dotHeight, dot.y)
         modelGroup.add(dotMesh)
       })
     })
@@ -202,7 +213,7 @@ export function BrailleViewer3D({ characters, baseWidth, baseHeight, minX, minY,
 
     const bounds = new THREE.Box3().setFromObject(modelGroup)
     modelCenterRef.current = bounds.getCenter(new THREE.Vector3())
-  }, [characters, baseWidth, baseHeight, minX, minY, baseDepth])
+  }, [characters, baseWidth, baseHeight, minX, minY, baseDepth, dotRadius, dotHeight])
 
   return <div ref={containerRef} className="w-full h-full rounded-lg" />
 }
