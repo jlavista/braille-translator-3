@@ -35,6 +35,52 @@ export interface BrailleSettings {
   dotHeight?: number
 }
 
+export interface BraillePreset {
+  name: string
+  description: string
+  dotRadius: number
+  dotHeight: number
+  padding: number
+}
+
+export const BRAILLE_PRESETS: Record<string, BraillePreset> = {
+  'us-standard': {
+    name: 'US Standard (ADA)',
+    description: 'American Disability Act compliant - dots 1.5mm diameter, 0.6mm height',
+    dotRadius: 0.75,
+    dotHeight: 0.6,
+    padding: 30
+  },
+  'marburg': {
+    name: 'Marburg Medium',
+    description: 'European standard - balanced for most applications',
+    dotRadius: 0.7,
+    dotHeight: 0.5,
+    padding: 25
+  },
+  'jumbo': {
+    name: 'Jumbo Braille',
+    description: 'Extra large for learning and low dexterity - 2mm diameter, 0.8mm height',
+    dotRadius: 1.0,
+    dotHeight: 0.8,
+    padding: 40
+  },
+  'compact': {
+    name: 'Compact',
+    description: 'Space-efficient design - smaller dots for experienced readers',
+    dotRadius: 0.5,
+    dotHeight: 0.4,
+    padding: 20
+  },
+  'custom': {
+    name: 'Custom',
+    description: 'Adjust all parameters manually',
+    dotRadius: 0.6,
+    dotHeight: 0.5,
+    padding: 30
+  }
+}
+
 const dotWidth = 2.5
 const dotHeight = 2.5
 const dotSpacing = 2.5

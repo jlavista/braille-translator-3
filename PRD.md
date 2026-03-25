@@ -33,6 +33,13 @@ A web application that converts text input into tactile Braille representations,
 - **Progression**: User clicks export → System generates STL geometry from Braille data → Binary STL file created → Browser downloads file
 - **Success criteria**: STL file is valid, opens in standard 3D software, and has proper dimensions for tactile reading
 
+### Braille Specification Presets
+- **Functionality**: Pre-configured settings based on standard Braille specifications (US ADA, Marburg, Jumbo, Compact)
+- **Purpose**: Ensures compliance with accessibility standards and provides quick configuration for different use cases
+- **Trigger**: User selects a preset from dropdown
+- **Progression**: User selects preset → System applies dot size, height, and padding values → 3D model updates → User can fine-tune or accept preset
+- **Success criteria**: Presets accurately reflect real-world Braille standards, apply consistently, and can be customized
+
 ## Edge Case Handling
 
 - **Empty Input**: Display empty state with helpful prompt, disable export until text is entered

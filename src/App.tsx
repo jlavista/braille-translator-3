@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Download, Cube, Code } from '@phosphor-icons/react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Download, Cube, Code, Info } from '@phosphor-icons/react'
 import { BrailleViewer3D } from '@/components/BrailleViewer3D'
-import { textToBraille, getBrailleCharacters, generateSTL, DEFAULT_DOT_RADIUS, DEFAULT_DOT_HEIGHT } from '@/lib/braille'
+import { textToBraille, getBrailleCharacters, generateSTL, DEFAULT_DOT_RADIUS, DEFAULT_DOT_HEIGHT, BRAILLE_PRESETS } from '@/lib/braille'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
@@ -17,9 +18,29 @@ function App() {
   const [inputText, setInputText] = useState('')
   const [showSTLCode, setShowSTLCode] = useState(false)
   const [stlContent, setStlContent] = useState('')
+  const [selectedPreset, setSelectedPreset] = useKV<string>('braille-preset', 'us-standard')
   const [padding, setPadding] = useKV<number>('braille-padding', 30)
   const [dotRadius, setDotRadius] = useKV<number>('braille-dot-radius', DEFAULT_DOT_RADIUS)
   const [dotHeight, setDotHeight] = useKV<number>('braille-dot-height', DEFAULT_DOT_HEIGHT)
+
+  const handlePresetChange = (presetKey: string) => {
+    setSelectedPreset(presetKey)
+    const preset = BRAILLE_PRESETS[presetKey]
+    if (preset && presetKey !== 'custom') {
+      setDotRadius(preset.dotRadius)
+      setDotHeight(preset.dotHeight)
+      setPadding(preset.padding)
+      toast.success(`Applied ${preset.name}`, {
+        description: preset.description
+      })
+    }
+  }
+
+  const handleManualAdjustment = () => {
+    if (selectedPreset !== 'custom') {
+      setSelectedPreset('custom')
+    }
+  }
 
   const brailleText = useMemo(() => textToBraille(inputText), [inputText])
   
@@ -196,14 +217,55 @@ function App() {
               <Separator />
 
               <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="preset-select" className="text-base font-semibold flex-1">
+                    Braille Specification
+                  </Label>
+                  <Info size={16} className="text-muted-foreground" />
+                </div>
+                <Select value={selectedPreset ?? 'us-standard'} onValueChange={handlePresetChange}>
+                  <SelectTrigger id="preset-select" className="w-full">
+                    <SelectValue placeholder="Select a preset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(BRAILLE_PRESETS).map(([key, preset]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">{preset.name}</span>
+                          <span className="text-xs text-muted-foreground line-clamp-1">
+                            {preset.description}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedPreset && selectedPreset !== 'custom' && (
+                  <div className="bg-accent/10 border border-accent/20 rounded-md p-3 text-xs space-y-1">
+                    <p className="font-medium text-accent-foreground">
+                      {BRAILLE_PRESETS[selectedPreset]?.name}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {BRAILLE_PRESETS[selectedPreset]?.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
                 <Label htmlFor="padding-slider" className="text-base font-semibold">
-                  Padding/Margin Size
+                  Padding/Margin Size {selectedPreset === 'custom' && <span className="text-xs text-accent">(Custom)</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Slider
                     id="padding-slider"
                     value={[padding ?? 30]}
-                    onValueChange={(value) => setPadding(value[0])}
+                    onValueChange={(value) => {
+                      setPadding(value[0])
+                      handleManualAdjustment()
+                    }}
                     min={10}
                     max={100}
                     step={5}
@@ -222,13 +284,16 @@ function App() {
 
               <div className="space-y-3">
                 <Label htmlFor="dot-radius-slider" className="text-base font-semibold">
-                  Dot Size (Radius)
+                  Dot Size (Radius) {selectedPreset === 'custom' && <span className="text-xs text-accent">(Custom)</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Slider
                     id="dot-radius-slider"
                     value={[dotRadius ?? DEFAULT_DOT_RADIUS]}
-                    onValueChange={(value) => setDotRadius(value[0])}
+                    onValueChange={(value) => {
+                      setDotRadius(value[0])
+                      handleManualAdjustment()
+                    }}
                     min={0.3}
                     max={1.5}
                     step={0.05}
@@ -245,13 +310,16 @@ function App() {
 
               <div className="space-y-3">
                 <Label htmlFor="dot-height-slider" className="text-base font-semibold">
-                  Dot Height
+                  Dot Height {selectedPreset === 'custom' && <span className="text-xs text-accent">(Custom)</span>}
                 </Label>
                 <div className="flex items-center gap-4">
                   <Slider
                     id="dot-height-slider"
                     value={[dotHeight ?? DEFAULT_DOT_HEIGHT]}
-                    onValueChange={(value) => setDotHeight(value[0])}
+                    onValueChange={(value) => {
+                      setDotHeight(value[0])
+                      handleManualAdjustment()
+                    }}
                     min={0.2}
                     max={1.5}
                     step={0.05}
