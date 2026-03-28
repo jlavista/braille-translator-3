@@ -214,27 +214,32 @@ export function generateSTL(
 
   characters.forEach(character => {
     character.dots.forEach(dot => {
-      const segments = 12
       const cx = dot.x
       const cy = -dot.y
-      const cz = baseDepth + dotHeight
+      const dotWidth = dotRadius * 2
+      const dotDepth = dotRadius * 2
+      
+      const x1 = cx - dotRadius
+      const x2 = cx + dotRadius
+      const y1 = cy - dotRadius
+      const y2 = cy + dotRadius
+      const z1 = baseDepth
+      const z2 = baseDepth + dotHeight
 
-      for (let i = 0; i < segments; i++) {
-        const angle1 = (i / segments) * Math.PI * 2
-        const angle2 = ((i + 1) / segments) * Math.PI * 2
+      addTriangle([x1, y1, z2], [x2, y1, z2], [x2, y2, z2])
+      addTriangle([x1, y1, z2], [x2, y2, z2], [x1, y2, z2])
 
-        const x1 = cx + Math.cos(angle1) * dotRadius
-        const y1 = cy + Math.sin(angle1) * dotRadius
-        const x2 = cx + Math.cos(angle2) * dotRadius
-        const y2 = cy + Math.sin(angle2) * dotRadius
+      addTriangle([x1, y1, z1], [x1, y2, z1], [x1, y2, z2])
+      addTriangle([x1, y1, z1], [x1, y2, z2], [x1, y1, z2])
 
-        addTriangle([cx, cy, cz], [x1, y1, baseDepth], [x2, y2, baseDepth])
+      addTriangle([x2, y1, z1], [x2, y2, z2], [x2, y2, z1])
+      addTriangle([x2, y1, z1], [x2, y1, z2], [x2, y2, z2])
 
-        addTriangle([x1, y1, baseDepth], [x2, y2, baseDepth], [x2, y2, 0])
-        addTriangle([x1, y1, baseDepth], [x2, y2, 0], [x1, y1, 0])
-      }
+      addTriangle([x1, y1, z1], [x2, y1, z2], [x2, y1, z1])
+      addTriangle([x1, y1, z1], [x1, y1, z2], [x2, y1, z2])
 
-      addTriangle([cx, cy, cz], [cx + dotRadius, cy, baseDepth], [cx, cy + dotRadius, baseDepth])
+      addTriangle([x1, y2, z1], [x2, y2, z1], [x2, y2, z2])
+      addTriangle([x1, y2, z1], [x2, y2, z2], [x1, y2, z2])
     })
   })
 
