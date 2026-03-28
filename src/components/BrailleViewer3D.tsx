@@ -201,7 +201,7 @@ export function BrailleViewer3D({
 
     characters.forEach(character => {
       character.dots.forEach(dot => {
-        const dotGeometry = new THREE.BoxGeometry(dotRadius * 2, dotHeight, dotRadius * 2)
+        const dotGeometry = new THREE.CylinderGeometry(dotRadius, dotRadius, dotHeight, 16)
         const dotMesh = new THREE.Mesh(dotGeometry, dotMaterial)
         dotMesh.position.set(dot.x, baseDepth + dotHeight / 2, dot.y)
         modelGroup.add(dotMesh)

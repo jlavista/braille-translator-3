@@ -216,30 +216,35 @@ export function generateSTL(
     character.dots.forEach(dot => {
       const cx = dot.x
       const cy = -dot.y
-      const dotWidth = dotRadius * 2
-      const dotDepth = dotRadius * 2
+      const zBottom = baseDepth
+      const zTop = baseDepth + dotHeight
+      const segments = 16
       
-      const x1 = cx - dotRadius
-      const x2 = cx + dotRadius
-      const y1 = cy - dotRadius
-      const y2 = cy + dotRadius
-      const z1 = baseDepth
-      const z2 = baseDepth + dotHeight
-
-      addTriangle([x1, y1, z2], [x2, y1, z2], [x2, y2, z2])
-      addTriangle([x1, y1, z2], [x2, y2, z2], [x1, y2, z2])
-
-      addTriangle([x1, y1, z1], [x1, y2, z1], [x1, y2, z2])
-      addTriangle([x1, y1, z1], [x1, y2, z2], [x1, y1, z2])
-
-      addTriangle([x2, y1, z1], [x2, y2, z2], [x2, y2, z1])
-      addTriangle([x2, y1, z1], [x2, y1, z2], [x2, y2, z2])
-
-      addTriangle([x1, y1, z1], [x2, y1, z2], [x2, y1, z1])
-      addTriangle([x1, y1, z1], [x1, y1, z2], [x2, y1, z2])
-
-      addTriangle([x1, y2, z1], [x2, y2, z1], [x2, y2, z2])
-      addTriangle([x1, y2, z1], [x2, y2, z2], [x1, y2, z2])
+      const vertices: number[][] = []
+      const topCenter = [cx, cy, zTop]
+      const bottomCenter = [cx, cy, zBottom]
+      
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * Math.PI * 2
+        const x = cx + Math.cos(angle) * dotRadius
+        const y = cy + Math.sin(angle) * dotRadius
+        vertices.push([x, y, zTop])
+        vertices.push([x, y, zBottom])
+      }
+      
+      for (let i = 0; i < segments; i++) {
+        const topIdx = i * 2
+        const bottomIdx = i * 2 + 1
+        const nextTopIdx = ((i + 1) % (segments + 1)) * 2
+        const nextBottomIdx = ((i + 1) % (segments + 1)) * 2 + 1
+        
+        addTriangle(topCenter, vertices[topIdx], vertices[nextTopIdx])
+        
+        addTriangle(bottomCenter, vertices[nextBottomIdx], vertices[bottomIdx])
+        
+        addTriangle(vertices[topIdx], vertices[bottomIdx], vertices[nextBottomIdx])
+        addTriangle(vertices[topIdx], vertices[nextBottomIdx], vertices[nextTopIdx])
+      }
     })
   })
 
