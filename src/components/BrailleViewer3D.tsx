@@ -33,6 +33,7 @@ export function BrailleViewer3D({
   const mouseDownRef = React.useRef(false)
   const mousePositionRef = React.useRef({ x: 0, y: 0 })
   const modelCenterRef = React.useRef(new THREE.Vector3())
+  const isInitializedRef = React.useRef(false)
 
   React.useEffect(() => {
     if (!containerRef.current) return
@@ -134,8 +135,10 @@ export function BrailleViewer3D({
     }
 
     animate()
+    isInitializedRef.current = true
 
     return () => {
+      isInitializedRef.current = false
       if (frameIdRef.current !== null) {
         cancelAnimationFrame(frameIdRef.current)
       }
@@ -166,7 +169,7 @@ export function BrailleViewer3D({
   }, [])
 
   React.useEffect(() => {
-    if (!sceneRef.current) return
+    if (!sceneRef.current || !isInitializedRef.current) return
 
     if (modelGroupRef.current) {
       sceneRef.current.remove(modelGroupRef.current)
@@ -212,7 +215,12 @@ export function BrailleViewer3D({
     sceneRef.current.add(modelGroup)
 
     const bounds = new THREE.Box3().setFromObject(modelGroup)
-    modelCenterRef.current = bounds.getCenter(new THREE.Vector3())
+    const newCenter = bounds.getCenter(new THREE.Vector3())
+    modelCenterRef.current.copy(newCenter)
+
+    if (rendererRef.current && cameraRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current)
+    }
   }, [characters, baseWidth, baseHeight, minX, minY, baseDepth, dotRadius, dotHeight])
 
   return <div ref={containerRef} className="w-full h-full rounded-lg" />
